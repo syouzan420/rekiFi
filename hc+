@@ -1,0 +1,28 @@
+#!/bin/sh
+
+base=~/Documents/haskell/
+tg=~/Documents/www
+
+#tg2=~/Documents/electron/fi
+
+fii=$base/fi
+com=$fii/compiler-latest
+
+./maketext
+rm $com/Main.js
+hastec $fii/Main.hs
+echo "we make file Make.js"
+cp $fii/Main.js $com/
+java -jar $com/closure-compiler-v20200719.jar --js $com/Main.js --js_output_file $com/f.js
+echo "we make file f.js"
+rm $com/fi.js
+mv $com/f.js $com/fi.js
+cp $com/fi.js $tg/ 
+
+#cp $com/fi.js $tg2/src/
+#cd $tg2
+#node_modules/.bin/electron-builder --win --x64
+
+cd $fii
+echo "complete"
+./clean.sh
