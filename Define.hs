@@ -1,5 +1,7 @@
 module Define where
 
+import EReki(Rdt(..))
+
 type Pos = (Int,Int)
 type Fsize = Int          --Font Size
 type Mana = Char 
@@ -56,8 +58,10 @@ data State = State {player:: !Play,
                     chn:: !Int,     -- Choice Number
                     rek:: ![String],   
                           -- Rekisi Data [QuestionType(1,2)
-                          --             ,left Chars, right Chars]
+                          -- ,left Chars, right Chars, dialog title]
                           -- i.e. z=abc (left Chars "z", right Chars "abc")
+                    rdt:: ![Rdt],   -- Rekisi Mondai Data
+                    tic:: !Int,   -- timer tic
                     swc:: !Switch,
                     db:: !String    --for debug
                    } deriving (Eq,Show)
@@ -87,8 +91,11 @@ cvT = 10  --trim(yohaku)
 imgfile :: String
 imgfile = "Images/img"
 
+charafile :: String
+charafile = "Images/Chara/ch"
+
 wstfile :: String
-wstfile = "WstImage/wst"
+wstfile = "Images/Wst/wst"
 
 wstIndex :: String
 wstIndex = "あいうえおxkhnmtrsy かはなまきひにみくふぬむけへねめこほのもとろそよをてれせゑつるすゆんちりしゐたらさやわ゛阿和宇吾付須被意百雄間波が9穂ぞ話葉ざぐび緒ど3ずばぶぎべ補芽1府場じ個我ご図時曾火日だ座羽4馬部祖炉具語づ後子男でぜ出裳美"

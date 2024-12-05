@@ -10,7 +10,7 @@ import Haste.Foreign (ffi)
 import Haste.JSON(JSON,encodeJSON,decodeJSON)
 import Haste.JSString(pack,unpack)
 import Haste.LocalStorage(setItem,getItem,removeItem)
-import Define (State(swc),Switch(itc),CInfo,LSA(..),imgfile,wstfile)
+import Define (State(swc),Switch(itc),CInfo,LSA(..),imgfile,wstfile,charafile)
 
 chColors :: [Color]
 chColors = [RGB 200 255 200,RGB 255 204 153,RGB 255 153 204,RGB 153 255 255] 
@@ -85,8 +85,9 @@ loadImgs :: Int -> String -> [IO Bitmap]
 loadImgs (-1) str = []
 loadImgs i str = loadImgs (i-1) str ++ [loadBitmap (pack (str ++ show i ++".png"))]
 
-setBmps :: IO ([Bitmap],[Bitmap])
+setBmps :: IO ([Bitmap],[Bitmap],[Bitmap])
 setBmps = do
   imgs <- sequence (loadImgs 5 imgfile)
+  chrs <- sequence (loadImgs 56 charafile)
   wsts <- sequence (loadImgs 120 wstfile)
-  return (imgs,wsts)
+  return (imgs,chrs,wsts)

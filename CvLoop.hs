@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CvLoop (inputLoop,mouseClick) where
+module CvLoop (inputLoop,mouseClick,timerEvent) where
 
 import Haste.Graphics.Canvas(Canvas,Bitmap)
 import Haste.Audio
@@ -19,13 +19,21 @@ import Action(keyCodeToChar,keyChoice,keyCheck,putOut,plMove,makeChoiceMessage)
 import Event(makeEvent)
 import EReki (Rdt(..), reki)
 
-mouseClick :: Canvas -> [Bitmap] -> CInfo -> Int -> Int -> State -> IO State
-mouseClick c wsts ci x y = do
+type Bmps = ([Bitmap],[Bitmap],[Bitmap])
+
+timerEvent :: Canvas -> CInfo -> Bmps -> State -> IO State
+timerEvent c ci bmps st = do
+  let ticSt = tic st
+      t = if ticSt > 254 then 0 else ticSt+1
+  putMessageG c ci st
+
+mouseClick :: Canvas -> CInfo -> Bmps -> (Int,Int) -> State -> IO State
+mouseClick c ci bmps (x,y) = do
   let (rtx,rty) = cvRatio ci
       nx = fromIntegral x*rtx
       ny = fromIntegral y*rty
       cvWH = fst ci
-  inputLoop c wsts ci (flToKc (clFields nx ny (fields cvWH))) 
+  inputLoop c ci bmps (flToKc (clFields nx ny (fields cvWH))) 
 
 skipMessage :: Canvas -> CInfo -> State -> IO State
 skipMessage c ci st = do
@@ -81,8 +89,8 @@ makeRekiMon = map (\(Rdt _ mon _ _,ch)-> (ch:"Rk",mon))
 makeRekiAns :: String -> [Int] -> String
 makeRekiAns str = map (\i -> fromMaybe ' ' (lookup i (zip [1..] str)))
 
-mapAction :: Canvas -> [Bitmap] -> CInfo -> Int -> Char -> State -> IO State
-mapAction c wsts ci gix ch st = do
+mapAction :: Canvas -> CInfo -> Bmps -> Int -> Char -> State -> IO State
+mapAction c ci bmps gix ch st = do
   let irkSt = not $ null $ rek st
   rst <- if irkSt then rekiAction st else return st
   let p@(Play xyP _ _ _ _ _ rgnP elgP _ iscP) = player rst
@@ -110,7 +118,7 @@ mapAction c wsts ci gix ch st = do
              _   -> return "---"
   if ch=='r' && sData/="loadError" then loadState c ci sData nst else do 
     print sData
-    if ils nsw || ch=='n' then nextStage c wsts ci nst{swc=nsw{ims=False}} 
+    if ils nsw || ch=='n' then nextStage c ci bmps nst{swc=nsw{ims=False}} 
                          else do
           let pxy = (px'+gsx,py')
           if et (player nst)==' ' then putMozi c (chColors!!1) pxy [pl p'']
@@ -118,12 +126,12 @@ mapAction c wsts ci gix ch st = do
           -- putWst c wsts 20 (23,3) 'あ' -- for wst drawing test
           return nst
 
-inputLoop :: Canvas -> [Bitmap] -> CInfo -> Int -> State -> IO State 
-inputLoop c wsts ci@((cvW,cvH),_) kc st
+inputLoop :: Canvas -> CInfo -> Bmps -> Int -> State -> IO State 
+inputLoop c ci@((cvW,cvH),_) bmps kc st
   | iniSt = return st
   | imsSt && not impSt = skipMessage c ci st{swc=sw{ini=True}} 
   | impSt = if ichSt then choiceAction c cvH mix gix ch st else return st{swc=sw{imp=False}}
-  | ismSt = mapAction c wsts ci gix ch st
+  | ismSt = mapAction c ci bmps gix ch st
   | otherwise = return st 
        where sw = swc st
              iniSt = ini sw; impSt = imp sw; imsSt = ims sw
@@ -160,8 +168,8 @@ listToTupples [] = []
 listToTupples [x] = []
 listToTupples (x:y:xs) = (x,y):listToTupples xs
 
-nextStage :: Canvas -> [Bitmap] -> CInfo -> State -> IO State 
-nextStage c wsts ci st = do
+nextStage :: Canvas -> CInfo -> Bmps -> State -> IO State 
+nextStage c ci bmps st = do
   let p = player st
       js = jps st
       nsn = if js<0 then sn p + 1 else js
@@ -175,7 +183,7 @@ nextStage c wsts ci st = do
               iwn=checkGrid (' ',Wn) grid
               np = p{xy=initPos!!nsn, gr=grid, pl=players!!nsn, et=' ',sn=nsn,
                      elg=nlg,isc=False,iw=iwn}
-          inputLoop c wsts ci 64 st{sz=nsz,player=np,msg="",jps = -1,swc=(swc st){ils=False,igc=False}}
+          inputLoop c ci bmps 64 st{sz=nsz,player=np,msg="",jps = -1,swc=(swc st){ils=False,igc=False}}
 
 gameClear :: Canvas -> State -> IO State 
 gameClear c st = do putMoziCl c
