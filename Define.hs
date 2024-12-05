@@ -15,6 +15,7 @@ type Func = (Char->Char)
 type Func2 = (Char->Char->Char)
 type Def = (String,Integer) -- "String"=Integer 
 type Msg = String
+type Chara = (Int,Int) ---(chara type number, chara animation number)
 type Evt = (String,String)    --(Triger Event, Target Event)
 type Mem = (String,String)    --memory (for event trigger)
 type CInfo = ((Double,Double),(Double,Double)) 
@@ -61,6 +62,7 @@ data State = State {player:: !Play,
                           -- ,left Chars, right Chars, dialog title]
                           -- i.e. z=abc (left Chars "z", right Chars "abc")
                     rdt:: ![Rdt],   -- Rekisi Mondai Data
+                    chr:: !Chara, -- Character number (i,i)
                     tic:: !Int,   -- timer tic
                     swc:: !Switch,
                     db:: !String    --for debug

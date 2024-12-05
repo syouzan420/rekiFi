@@ -12,7 +12,8 @@ import Define(State(..),Play(..),Switch(..),Mode(..),LSA(..),CInfo,Msg,miy,wg,wt
 import Stages(stages,players,initPos,gridSize)
 import Grid(checkGrid,makeGrid)
 import Browser(chColors,clFields,flToKc,fields,cvRatio,localStore,stringToJson)
-import OutToCanvas(putMessageG,putMessageT,putGrid,putMoziCl,clearMessage,putMozi,putWst)
+import OutToCanvas(putMessageG,putMessageT,putGrid,putMoziCl,clearMessage
+                  ,putMozi,putWst,putChara)
 import Check(checkEv,getMessage)
 import Libs(getRandomNumIO,sepByChar)
 import Action(keyCodeToChar,keyChoice,keyCheck,putOut,plMove,makeChoiceMessage)
@@ -25,7 +26,18 @@ timerEvent :: Canvas -> CInfo -> Bmps -> State -> IO State
 timerEvent c ci bmps st = do
   let ticSt = tic st
       t = if ticSt > 254 then 0 else ticSt+1
-  putMessageG c ci st
+      (szX,_) = sz st
+      ((cvW,_),_) = ci
+      (_,chrs,_) = bmps
+      (chNum,anNum) = chr st
+      anNum'
+        | t `mod` 8 /= 0 = anNum
+        | even anNum = anNum + 1
+        | otherwise = anNum - 1
+      chrIndex = chNum*8+anNum'
+      nst = st{tic=t,chr=(chNum,anNum')}
+  putChara c chrs cvW szX chrIndex 
+  putMessageG c ci nst
 
 mouseClick :: Canvas -> CInfo -> Bmps -> (Int,Int) -> State -> IO State
 mouseClick c ci bmps (x,y) = do

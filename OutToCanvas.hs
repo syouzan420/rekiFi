@@ -1,5 +1,5 @@
 module OutToCanvas(putMessageG,putMessageT,putGrid,putMoziCl
-                  ,clearMessage,putMozi,putWst) where
+                  ,clearMessage,putMozi,putWst,putChara) where
 
 import Haste.Graphics.Canvas(Canvas,Color(RGB),Bitmap,color,font,translate,rotate
                             ,text,draw,scale,render,renderOnTop)
@@ -103,3 +103,8 @@ putWst c wsts fs (x,y) ch = do
   renderOnTop c $ translate (px, py+5) $ scale (0.7,0.7) $ draw (wsts!!ind) (0,0)
     where ind = if ch `elem` wstIndex then getIndex ch wstIndex else 14
           (px,py) = (fromIntegral x * wg, fromIntegral y * hg)
+
+putChara :: Canvas -> [Bitmap] -> Double -> Int -> Int -> IO ()
+putChara c chrs cvW szX ind = do  
+  renderOnTop c $ translate pos $ scale (2,2) $ draw (chrs!!ind) (0,0)
+    where pos = (cvW-fromIntegral (szX+7) * wg, fromIntegral miy * hg)
