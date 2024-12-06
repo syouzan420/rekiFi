@@ -8,7 +8,8 @@ import Data.List(intercalate,sort)
 import Data.Maybe(fromMaybe)
 import Text.Read(readMaybe)
 import Data.Text(unpack)
-import Define(State(..),Play(..),Switch(..),Mode(..),LSA(..),CInfo,Msg,miy,wg,wt)
+import Define(State(..),Play(..),Switch(..),Mode(..),LSA(..),CInfo,Pos,Msg
+             ,miy,wg,wt)
 import Stages(stages,players,initPos,gridSize)
 import Grid(checkGrid,makeGrid)
 import Browser(chColors,clFields,flToKc,fields,cvRatio,localStore,stringToJson)
@@ -21,32 +22,48 @@ import Event(makeEvent)
 import EReki (Rdt(..), reki)
 
 type Bmps = ([Bitmap],[Bitmap],[Bitmap])
+type GrPos = Pos
+type PlPos = Pos 
+type ChPos = Pos
+type TxPos = Pos
+data Positions = Ps GrPos PlPos ChPos TxPos
 
-timerEvent :: Canvas -> CInfo -> Bmps -> State -> IO State
-timerEvent c ci bmps st = do
-  --次の課題
-  --描画をアップデートする函數を別に設けて インプット時も利用できるやうにする
-  let ticSt = tic st
-      t = if ticSt > 254 then 0 else ticSt+1
-      (szX,_) = sz st
-      ((cvW,cvH),_) = ci
-      (_,chrs,_) = bmps
-      (chNum,anNum) = chr st
+getPos :: CInfo -> State -> Positions
+getPos ((cvW,cvH),_) st =
+  let mix = floor (cvW/wt) - 1
       gix = floor (cvW/wg) - 2
+      (wd,hi) = sz st
       p = player st
       grid = gr p 
       (px,py) = xy p
+   in Ps (gix-wd,miy) (px+gix-wd+1,py+miy+1) (wd+7,miy) (mix+msc st,miy+hi+3)
+
+timerEvent :: Canvas -> CInfo -> Bmps -> State -> IO State
+timerEvent c ci bmps st = do
+  let ticSt = tic st
+      sw = swc st
+      t = if ticSt > 254 then 0 else ticSt+1
+      isUpdate = ism  sw && t `mod` 8 == 0 && not (ims sw) 
+      nst = st{tic=t}
+  if isUpdate then drawUpdate c ci bmps nst else putMessageG c ci nst
+
+drawUpdate :: Canvas -> CInfo -> Bmps -> State -> IO State 
+drawUpdate c ci@((cvW,cvH),_) bmps st = do
+  let (_,chrs,_) = bmps
+      (chNum,anNum) = chr st
       anNum'
-        | t `mod` 8 /= 0 = anNum
         | even anNum = anNum + 1
         | otherwise = anNum - 1
       chrIndex = chNum*8+anNum'
-      nst = st{tic=t,chr=(chNum,anNum')}
-  putGrid c (gix-szX,miy) grid 
-  putPlayer c (px+gix-szX+1,py+miy+1) p
-  --putMessageT c cvH
-  putChara c chrs cvW szX chrIndex 
-  putMessageG c ci nst
+      nst = st{chr=(chNum,anNum')}
+      p = player nst
+      grid = gr p 
+      (Ps grPos plPos chPos txPos) = getPos ci nst
+  putGrid c grPos grid 
+  putPlayer c plPos p
+  putMessageT c cvH txPos (msg nst)
+  putChara c chrs cvW chPos chrIndex 
+  return nst
 
 mouseClick :: Canvas -> CInfo -> Bmps -> (Int,Int) -> State -> IO State
 mouseClick c ci bmps (x,y) = do

@@ -109,7 +109,7 @@ putWst c wsts fs (x,y) ch = do
     where ind = if ch `elem` wstIndex then getIndex ch wstIndex else 14
           (px,py) = (fromIntegral x * wg, fromIntegral y * hg)
 
-putChara :: Canvas -> [Bitmap] -> Double -> Int -> Int -> IO ()
-putChara c chrs cvW szX ind = do  
+putChara :: Canvas -> [Bitmap] -> Double -> Pos -> Int -> IO ()
+putChara c chrs cvW (x,y) ind = do  
   renderOnTop c $ translate pos $ scale (2,2) $ draw (chrs!!ind) (0,0)
-    where pos = (cvW-fromIntegral (szX+7) * wg, fromIntegral miy * hg)
+    where pos = (cvW-fromIntegral x * wg, fromIntegral y * hg)
