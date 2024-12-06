@@ -13,7 +13,7 @@ import Stages(stages,players,initPos,gridSize)
 import Grid(checkGrid,makeGrid)
 import Browser(chColors,clFields,flToKc,fields,cvRatio,localStore,stringToJson)
 import OutToCanvas(putMessageG,putMessageT,putGrid,putMoziCl,clearMessage
-                  ,putMozi,putWst,putChara)
+                  ,putPlayer,putMozi,putWst,putChara)
 import Check(checkEv,getMessage)
 import Libs(getRandomNumIO,sepByChar)
 import Action(keyCodeToChar,keyChoice,keyCheck,putOut,plMove,makeChoiceMessage)
@@ -24,18 +24,27 @@ type Bmps = ([Bitmap],[Bitmap],[Bitmap])
 
 timerEvent :: Canvas -> CInfo -> Bmps -> State -> IO State
 timerEvent c ci bmps st = do
+  --次の課題
+  --描画をアップデートする函數を別に設けて インプット時も利用できるやうにする
   let ticSt = tic st
       t = if ticSt > 254 then 0 else ticSt+1
       (szX,_) = sz st
-      ((cvW,_),_) = ci
+      ((cvW,cvH),_) = ci
       (_,chrs,_) = bmps
       (chNum,anNum) = chr st
+      gix = floor (cvW/wg) - 2
+      p = player st
+      grid = gr p 
+      (px,py) = xy p
       anNum'
         | t `mod` 8 /= 0 = anNum
         | even anNum = anNum + 1
         | otherwise = anNum - 1
       chrIndex = chNum*8+anNum'
       nst = st{tic=t,chr=(chNum,anNum')}
+  putGrid c (gix-szX,miy) grid 
+  putPlayer c (px+gix-szX+1,py+miy+1) p
+  --putMessageT c cvH
   putChara c chrs cvW szX chrIndex 
   putMessageG c ci nst
 

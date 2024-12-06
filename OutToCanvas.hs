@@ -1,4 +1,4 @@
-module OutToCanvas(putMessageG,putMessageT,putGrid,putMoziCl
+module OutToCanvas(putMessageG,putMessageT,putGrid,putMoziCl,putPlayer
                   ,clearMessage,putMozi,putWst,putChara) where
 
 import Haste.Graphics.Canvas(Canvas,Color(RGB),Bitmap,color,font,translate,rotate
@@ -73,6 +73,11 @@ putGrid c (x,y) grid = do
             let inside = map (\(ch,tp) -> if tp==DB || tp==DF then ' ' else ch) g
             putMozi c (head chColors) (p,q) ("|"++inside++"|")
             putInside (p,q+1) gs
+
+putPlayer :: Canvas -> Pos -> Play -> IO ()
+putPlayer c pxy p = do
+  let playerColor = if et p == ' ' then chColors!!1 else chColors!!2
+  putMozi c playerColor pxy [pl p] 
 
 putMoziCl :: Canvas -> IO ()
 putMoziCl c = render c $ text (0,0) "" 
