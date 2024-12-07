@@ -51,7 +51,9 @@ drawUpdate :: Canvas -> CInfo -> Bmps -> State -> IO State
 drawUpdate c ci@((cvW,cvH),_) bmps st = do
   let (_,chrs,_) = bmps
       (chNum,anNum) = chr st
+      t = tic st
       anNum'
+        | t `mod` 8 /= 0 = anNum
         | even anNum = anNum + 1
         | otherwise = anNum - 1
       chrIndex = chNum*8+anNum'
@@ -61,7 +63,7 @@ drawUpdate c ci@((cvW,cvH),_) bmps st = do
       (Ps grPos plPos chPos txPos) = getPos ci nst
   putGrid c grPos grid 
   putPlayer c plPos p
-  putMessageT c cvH txPos (msg nst)
+  unless ((ims . swc) st) $  putMessageT c cvH txPos (msg nst)
   putChara c chrs cvW chPos chrIndex 
   return nst
 
@@ -134,21 +136,12 @@ mapAction c ci bmps gix ch st = do
   let p@(Play xyP _ _ _ _ _ rgnP elgP _ iscP) = player rst
   sequence_ [print (evt st),print (ecs st), print (mem st),print elgP,print iscP,print (jps st)]
   (_,nrg) <- getRandomNumIO (5,rgnP)
-  let (x,y) = xyP 
-      (wd,hi) = sz st
-      gsx = gix-wd
-      (x',y') = keyCheck (wd,hi) (x,y) ch 
-      p' = plMove (x',y') p
-      (tx,ty) = xy p'
-      (px,py) = (x+1,y+miy+1)
-      (px',py') = (tx+1,ty+miy+1)
+  let nxy = keyCheck (sz st) xyP ch 
+      p' = plMove nxy p
       p'' = if ch==' ' then putOut p' else p'
-      nst = checkEv 0 (elg p'') (evt rst) rst{player=p''{rgn=nrg}}
-      nsw = swc nst
-      (wd',_) = sz nst
-      gsx' = gix-wd'
-  putGrid c (gsx',miy) (gr (player nst))
-  --unless (ims nsw) $ putMessageT c cvH (mix+msc nst,miy+hi+3) (msg nst)
+      st' = checkEv 0 (elg p'') (evt rst) rst{player=p''{rgn=nrg}}
+  nst <- drawUpdate c ci bmps st' 
+  let nsw = swc nst
   sData <- case ch of
              's' -> localStore Save "savedata" (makeSaveData st) 
              'r' -> localStore Load "savedata" ""
@@ -157,12 +150,7 @@ mapAction c ci bmps gix ch st = do
   if ch=='r' && sData/="loadError" then loadState c ci sData nst else do 
     print sData
     if ils nsw || ch=='n' then nextStage c ci bmps nst{swc=nsw{ims=False}} 
-                         else do
-          let pxy = (px'+gsx,py')
-          if et (player nst)==' ' then putMozi c (chColors!!1) pxy [pl p'']
-                                  else putMozi c (chColors!!2) pxy [pl p'']
-          -- putWst c wsts 20 (23,3) 'あ' -- for wst drawing test
-          return nst
+                          else return nst 
 
 inputLoop :: Canvas -> CInfo -> Bmps -> Int -> State -> IO State 
 inputLoop c ci@((cvW,cvH),_) bmps kc st
