@@ -1,5 +1,5 @@
 module Action(keyCodeToChar,keyChoice,keyCheck,putOut,plMove
-             ,makeChoiceMessage) where
+             ,makeChoiceMessage,mkDir) where
 
 import Define(State(..),Play(..),Switch(..),Mode(..),Dir(..),Pos,Size,Grid,Msg)
 import Stages(stages,players,initPos,gridSize,idef,evts)
@@ -36,7 +36,7 @@ spon i e t = let (sn,fs)=unzip stagePon
 
 putOut :: Play -> Play 
 putOut p =
-  let (Play pos grid pla eat snum edef _ lg _ _) = p
+  let (Play pos grid _ pla eat snum edef _ lg _ _) = p
       (ch,tp) = fromGrid pos grid 
       iout = eat/=' ' && ch==' '
       ipn = tp==Pn
@@ -55,7 +55,7 @@ putOut p =
 
 plMove :: Pos -> Play -> Play 
 plMove (x,y) p = 
-  let (Play mpos grid pla eat snum edef gen lg iwn is) = p
+  let (Play mpos grid _ pla eat snum edef gen lg iwn is) = p
       (ch,tp) = fromGrid (x,y) grid 
       fps = map fst funcPon
       ifp = eat==' ' && ch `elem` fps && tp==Fr

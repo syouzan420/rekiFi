@@ -32,6 +32,7 @@ data LSA = Save | Load | Remv deriving (Eq,Show)  -- local storage actions
 
 data Play = Play {xy:: !Pos,
                   gr:: !Grid,         
+                  dr:: !Dir,            -- Player Direction
                   pl:: !Char,           -- Player Appearance
                   et:: !Mana,           -- That Player Eats
                   sn:: !Int,            -- Stage Number
@@ -62,6 +63,7 @@ data State = State {player:: !Play,
                           -- ,left Chars, right Chars, dialog title]
                           -- i.e. z=abc (left Chars "z", right Chars "abc")
                     rdt:: ![Rdt],   -- Rekisi Mondai Data
+                    rtc:: !Int,     -- Rekisi timer tic
                     chr:: !Chara, -- Character number (i,i)
                     tic:: !Int,   -- timer tic
                     swc:: !Switch,

@@ -3,12 +3,12 @@ module CvLoop (inputLoop,mouseClick,timerEvent) where
 
 import Haste.Graphics.Canvas(Canvas,Bitmap)
 import Haste.Audio
-import Control.Monad(unless)
+import Control.Monad(unless,when)
 import Data.List(intercalate,sort)
 import Data.Maybe(fromMaybe)
 import Text.Read(readMaybe)
 import Data.Text(unpack)
-import Define(State(..),Play(..),Switch(..),Mode(..),LSA(..),CInfo,Pos,Msg
+import Define(State(..),Play(..),Switch(..),Mode(..),LSA(..),Dir(..),CInfo,Pos,Msg
              ,miy,wg,wt)
 import Stages(stages,players,initPos,gridSize)
 import Grid(checkGrid,makeGrid)
@@ -17,7 +17,8 @@ import OutToCanvas(putMessageG,putMessageT,putGrid,putMoziCl,clearMessage
                   ,putPlayer,putMozi,putWst,putChara)
 import Check(checkEv,getMessage)
 import Libs(getRandomNumIO,sepByChar)
-import Action(keyCodeToChar,keyChoice,keyCheck,putOut,plMove,makeChoiceMessage)
+import Action(keyCodeToChar,keyChoice,keyCheck,putOut,plMove,makeChoiceMessage
+             ,mkDir)
 import Event(makeEvent)
 import EReki (Rdt(..), reki)
 
@@ -36,15 +37,17 @@ getPos ((cvW,cvH),_) st =
       p = player st
       grid = gr p 
       (px,py) = xy p
-   in Ps (gix-wd,miy) (px+gix-wd+1,py+miy+1) (wd+7,miy) (mix+msc st,miy+hi+3)
+   in Ps (gix-wd,miy) (px+gix-wd+1,py+miy+1) (wd+10,miy) (mix+msc st,miy+hi+3)
 
 timerEvent :: Canvas -> CInfo -> Bmps -> State -> IO State
 timerEvent c ci bmps st = do
   let ticSt = tic st
+      rtcSt = rtc st
       sw = swc st
-      t = if ticSt > 254 then 0 else ticSt+1
-      isUpdate = ism  sw && t `mod` 8 == 0 && not (ims sw) 
-      nst = st{tic=t}
+      t = if ticSt > 298 then 0 else ticSt+1
+      isUpdate = ism  sw && t `mod` 10 == 0 && not (ims sw) 
+      nrtc = if null (rdt st) || t `mod` 20 /=0 then rtcSt else rtcSt + 1
+      nst = st{tic=t,rtc=nrtc}
   if isUpdate then drawUpdate c ci bmps nst else putMessageG c ci nst
 
 drawUpdate :: Canvas -> CInfo -> Bmps -> State -> IO State 
@@ -53,7 +56,7 @@ drawUpdate c ci@((cvW,cvH),_) bmps st = do
       (chNum,anNum) = chr st
       t = tic st
       anNum'
-        | t `mod` 8 /= 0 = anNum
+        | t `mod` 10 /= 0 = anNum
         | even anNum = anNum + 1
         | otherwise = anNum - 1
       chrIndex = chNum*8+anNum'
@@ -63,7 +66,9 @@ drawUpdate c ci@((cvW,cvH),_) bmps st = do
       (Ps grPos plPos chPos txPos) = getPos ci nst
   putGrid c grPos grid 
   putPlayer c plPos p
-  unless ((ims . swc) st) $  putMessageT c cvH txPos (msg nst)
+  unless ((ims . swc) nst) $  putMessageT c cvH txPos (msg nst)
+  when ((ich . swc) nst) $ putMessageT c cvH txPos (makeChoiceMessage (msg nst) (map fst (chd nst)) (chn nst)) 
+  unless (null (rdt nst)) $ putMozi c (chColors!!1) (1,1) (show (rtc nst))
   putChara c chrs cvW chPos chrIndex 
   return nst
 
@@ -84,22 +89,15 @@ skipMessage c ci st = do
 
 choiceAction :: Canvas -> Double -> Int -> Int -> Char -> State -> IO State
 choiceAction c cvH mix gix ch st = do
-  print "choice"
-  let hi = if ism (swc st) then snd (sz st) + 3 else 0
-      (dlgs,mnas) = unzip (chd st)
+  let (dlgs,mnas) = unzip (chd st)
       cn = chn st
       ncn = keyChoice (length dlgs - 1) cn ch 
   case ncn of
      (-1) -> do 
                let nmsg = getMessage [] (mnas!!cn)
-               clearMessage c gix st
                return st{msg=nmsg,swc=(swc st){ims=True,ich=False,imp=False}}
      (-2) -> return st
-     _    -> do
-               let cmsg = makeChoiceMessage (msg st) dlgs ncn 
-               clearMessage c gix st
-               putMessageT c cvH (mix+ msc st,miy+hi) cmsg
-               return st{chn=ncn}
+     _    -> return st{chn=ncn}
 
 rekiAction :: State -> IO State
 rekiAction st = do
@@ -114,7 +112,8 @@ rekiAction st = do
        (mondai,jun,ng) <- reki qt qLng randomG
        let ndef = [((l,333),stageNum),((makeRekiAns r jun,333),stageNum)]
            nmsg = makeRekiMon (zip mondai r)
-           st' = st{player=pl{edf=edf pl++ndef,rgn=ng}, ems=ems st++nmsg, rek=[]}
+           st' = st{player=pl{edf=edf pl++ndef,rgn=ng}, ems=ems st++nmsg
+                   ,rek=[], rdt=mondai, rtc=0}
            codeJp = ("e.==.m1:" ++ jp) : makeRekiJp r
            nst = foldl (flip makeEvent) st' codeJp
        return nst
@@ -129,17 +128,27 @@ makeRekiMon = map (\(Rdt _ mon _ _,ch)-> (ch:"Rk",mon))
 makeRekiAns :: String -> [Int] -> String
 makeRekiAns str = map (\i -> fromMaybe ' ' (lookup i (zip [1..] str)))
 
+drToNum :: Dir -> Int
+drToNum Up = 2
+drToNum Dw = 0
+drToNum Lf = 6
+drToNum Rt = 4
+drToNum _ = 0
+
 mapAction :: Canvas -> CInfo -> Bmps -> Int -> Char -> State -> IO State
 mapAction c ci bmps gix ch st = do
   let irkSt = not $ null $ rek st
   rst <- if irkSt then rekiAction st else return st
-  let p@(Play xyP _ _ _ _ _ rgnP elgP _ iscP) = player rst
+  let p@(Play xyP _ _ _ _ _ _ rgnP elgP _ iscP) = player rst
   sequence_ [print (evt st),print (ecs st), print (mem st),print elgP,print iscP,print (jps st)]
   (_,nrg) <- getRandomNumIO (5,rgnP)
   let nxy = keyCheck (sz st) xyP ch 
-      p' = plMove nxy p
+      ndr = mkDir xyP nxy
+      (chNum,anNum) = chr rst
+      nchr = if ndr==dr p then (chNum,anNum) else (chNum,drToNum ndr)
+      p' = plMove nxy p{dr=ndr}
       p'' = if ch==' ' then putOut p' else p'
-      st' = checkEv 0 (elg p'') (evt rst) rst{player=p''{rgn=nrg}}
+      st' = checkEv 0 (elg p'') (evt rst) rst{player=p''{rgn=nrg}, chr=nchr}
   nst <- drawUpdate c ci bmps st' 
   let nsw = swc nst
   sData <- case ch of
@@ -156,7 +165,8 @@ inputLoop :: Canvas -> CInfo -> Bmps -> Int -> State -> IO State
 inputLoop c ci@((cvW,cvH),_) bmps kc st
   | iniSt = return st
   | imsSt && not impSt = skipMessage c ci st{swc=sw{ini=True}} 
-  | impSt = if ichSt then choiceAction c cvH mix gix ch st else return st{swc=sw{imp=False}}
+  | impSt = if ichSt then choiceAction c cvH mix gix ch st >>= drawUpdate c ci bmps 
+                     else return st{swc=sw{imp=False}}
   | ismSt = mapAction c ci bmps gix ch st
   | otherwise = return st 
        where sw = swc st
