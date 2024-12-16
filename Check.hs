@@ -94,10 +94,10 @@ checkEv i lg ((e,t):xs) st =
       ll = drop (length lg - le) lg
       ne' = if last ne=='?' then init ne else ne
       ll' = if last ne=='?'&&ll/="" then init ll else ll 
-      (tgt,ind) = if ne'==ll'&&ic || ne'=="X" then (t,i) else ("",i) 
+      (tgt,ind) = if ne'==ll' && ic || ne'=="X" then (t,i) else ("",i) 
    in if tgt=="" then checkEv (i+1) lg xs st
-                  else let nst = trEvent ind tgt st
-                        in if length (ecs nst)==length (ecs st)
+                 else let nst = trEvent ind tgt st
+                       in if length (ecs nst)==length (ecs st)
                               then checkEv (i+1) lg xs nst else nst
 
 getMessage :: [(String,Msg)] -> String -> String

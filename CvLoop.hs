@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 module CvLoop (inputLoop,mouseClick,timerEvent) where
 
 import Haste.Graphics.Canvas(Canvas,Bitmap)
@@ -6,8 +5,8 @@ import Haste.Audio
 import Control.Monad(unless,when)
 import Data.List(intercalate,sort)
 import Data.Maybe(fromMaybe)
+import qualified Data.Map as Map
 import Text.Read(readMaybe)
-import Data.Text(unpack)
 import Define(State(..),Play(..),Switch(..),Mode(..),LSA(..),Dir(..),CInfo,Pos,Msg
              ,miy,wg,wt)
 import Stages(stages,players,initPos,gridSize)
@@ -45,10 +44,11 @@ timerEvent c ci bmps st = do
       rtcSt = rtc st
       sw = swc st
       t = if ticSt > 298 then 0 else ticSt+1
-      isUpdate = ism  sw && t `mod` 10 == 0 && not (ims sw) 
+      isChrUpdate = ism  sw && t `mod` 10 == 0 && not (ims sw) 
       nrtc = if null (rdt st) || t `mod` 20 /=0 then rtcSt else rtcSt + 1
-      nst = st{tic=t,rtc=nrtc}
-  if isUpdate then drawUpdate c ci bmps nst else putMessageG c ci nst
+      rst = if nrtc==30 then rekiHint st else st
+      nst = rst{tic=t,rtc=nrtc}
+  if isChrUpdate then drawUpdate c ci bmps nst else putMessageG c ci nst
 
 drawUpdate :: Canvas -> CInfo -> Bmps -> State -> IO State 
 drawUpdate c ci@((cvW,cvH),_) bmps st = do
@@ -87,17 +87,16 @@ skipMessage c ci st = do
   if imp sw' || not (ims (swc st)) then return st'{swc=sw'{ini=False}}
                                    else skipMessage c ci st'
 
-choiceAction :: Canvas -> Double -> Int -> Int -> Char -> State -> IO State
-choiceAction c cvH mix gix ch st = do
+choiceMode :: Char -> State -> State
+choiceMode ch st = 
   let (dlgs,mnas) = unzip (chd st)
       cn = chn st
       ncn = keyChoice (length dlgs - 1) cn ch 
-  case ncn of
-     (-1) -> do 
-               let nmsg = getMessage [] (mnas!!cn)
-               return st{msg=nmsg,swc=(swc st){ims=True,ich=False,imp=False}}
-     (-2) -> return st
-     _    -> return st{chn=ncn}
+   in case ncn of
+        (-1) -> let nmsg = getMessage [] (mnas!!cn)
+                 in st{msg=nmsg,swc=(swc st){ims=True,ich=False,imp=False}}
+        (-2) -> st
+        _    -> st{chn=ncn}
 
 rekiAction :: State -> IO State
 rekiAction st = do
@@ -111,19 +110,47 @@ rekiAction st = do
            qLng = length r -- number of questions
        (mondai,jun,ng) <- reki qt qLng randomG
        let ndef = [((l,333),stageNum),((makeRekiAns r jun,333),stageNum)]
-           nmsg = makeRekiMon (zip mondai r)
+           nrdt = zip mondai r
+           nmsg = makeRekiMon nrdt 
            st' = st{player=pl{edf=edf pl++ndef,rgn=ng}, ems=ems st++nmsg
-                   ,rek=[], rdt=mondai, rtc=0}
+                   ,rek=[], rdt=nrdt, rtc=0}
            codeJp = ("e.==.m1:" ++ jp) : makeRekiJp r
            nst = foldl (flip makeEvent) st' codeJp
        return nst
     _ -> return st{rek=[]}
+
+rekiHint :: State -> State
+rekiHint st = let rdtSt = rdt st
+                  emsSt = ems st
+                  emsSt' = delRekMessages (map snd rdtSt) emsSt
+                  nems = emsSt' ++ makeRekiHint rdtSt
+               in st{ems=nems} 
+
+rekiCorrect :: State -> State
+rekiCorrect st = let rdtSt = rdt st
+                     emsSt = ems st
+                     emsSt' = delRekMessages (map snd rdtSt) emsSt
+                     nems = emsSt' ++ makeRekiCorrect rdtSt
+                  in st{ems=nems,rdt=[]} 
+
+delRekMessages :: [Char] -> [(String,Msg)] -> [(String,Msg)]
+delRekMessages chs emsSt =
+  let keys = map (: "Rk") chs
+      mapList = foldl (flip Map.delete) (Map.fromList emsSt) keys
+   in Map.toList mapList
 
 makeRekiJp :: String -> [String]
 makeRekiJp = map (\ch ->"e.e" ++ [ch] ++ ".m0:" ++ [ch] ++ "Rk") 
 
 makeRekiMon :: [(Rdt,Char)] -> [(String,Msg)]  
 makeRekiMon = map (\(Rdt _ mon _ _,ch)-> (ch:"Rk",mon))
+
+makeRekiHint :: [(Rdt,Char)] -> [(String,Msg)]  
+makeRekiHint = map (\(Rdt _ mon hint _,ch)-> (ch:"Rk",mon++" >>"++hint))
+
+makeRekiCorrect :: [(Rdt,Char)] -> [(String,Msg)]  
+makeRekiCorrect = map (\(Rdt nen mon _ exp,ch) ->
+                           (ch:"Rk",show nen++"年 "++mon++" >>"++exp))
 
 makeRekiAns :: String -> [Int] -> String
 makeRekiAns str = map (\i -> fromMaybe ' ' (lookup i (zip [1..] str)))
@@ -134,6 +161,9 @@ drToNum Dw = 0
 drToNum Lf = 6
 drToNum Rt = 4
 drToNum _ = 0
+
+lastN :: Int -> String -> String
+lastN i str = let lng = length str in drop (lng-i) str
 
 mapAction :: Canvas -> CInfo -> Bmps -> Int -> Char -> State -> IO State
 mapAction c ci bmps gix ch st = do
@@ -149,7 +179,9 @@ mapAction c ci bmps gix ch st = do
       p' = plMove nxy p{dr=ndr}
       p'' = if ch==' ' then putOut p' else p'
       st' = checkEv 0 (elg p'') (evt rst) rst{player=p''{rgn=nrg}, chr=nchr}
-  nst <- drawUpdate c ci bmps st' 
+      irkComp = not (null (rdt st')) && lastN 2 (elg p'') == "=="
+      st'' = if irkComp then rekiCorrect st' else st'
+  nst <- drawUpdate c ci bmps st'' 
   let nsw = swc nst
   sData <- case ch of
              's' -> localStore Save "savedata" (makeSaveData st) 
@@ -165,7 +197,7 @@ inputLoop :: Canvas -> CInfo -> Bmps -> Int -> State -> IO State
 inputLoop c ci@((cvW,cvH),_) bmps kc st
   | iniSt = return st
   | imsSt && not impSt = skipMessage c ci st{swc=sw{ini=True}} 
-  | impSt = if ichSt then choiceAction c cvH mix gix ch st >>= drawUpdate c ci bmps 
+  | impSt = if ichSt then drawUpdate c ci bmps (choiceMode ch st) 
                      else return st{swc=sw{imp=False}}
   | ismSt = mapAction c ci bmps gix ch st
   | otherwise = return st 

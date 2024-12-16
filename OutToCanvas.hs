@@ -20,7 +20,8 @@ putMessageG c ((cvW,cvH),_) st = do
                   putLet c col rfs rd (p',q') ch) (zip rbs [0,1..]) 
             else do
               let (itp0,itp1,msg',posx) = prepNormal isc iscx mc ms mix scx nsw nst
-              when (itp0||itp1) $ clearMessage c gix nst >>
+              when itp0 $ putMessageT c cvH (posx,miq) msg'
+              when itp1 $ clearMessage c gix nst >>
                                        putMessageT c cvH (posx,miq) msg'
               when (not isc && not iscx) $ putLet c col nfs 0 (p,q) ch
      return nst'

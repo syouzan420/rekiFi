@@ -62,7 +62,7 @@ data State = State {player:: !Play,
                           -- Rekisi Data [QuestionType(1,2)
                           -- ,left Chars, right Chars, dialog title]
                           -- i.e. z=abc (left Chars "z", right Chars "abc")
-                    rdt:: ![Rdt],   -- Rekisi Mondai Data
+                    rdt:: ![(Rdt,Char)],   -- Rekisi Mondai Data
                     rtc:: !Int,     -- Rekisi timer tic
                     chr:: !Chara, -- Character number (i,i)
                     tic:: !Int,   -- timer tic
