@@ -111,8 +111,9 @@ rekiAction st = do
        (mondai,jun,ng) <- reki qt qLng randomG
        let ndef = [((l,333),stageNum),((makeRekiAns r jun,333),stageNum)]
            nrdt = zip mondai r
+           emsSt = delRekMessages r (ems st)
            nmsg = makeRekiMon nrdt 
-           st' = st{player=pl{edf=edf pl++ndef,rgn=ng}, ems=ems st++nmsg
+           st' = st{player=pl{edf=edf pl++ndef,rgn=ng}, ems=emsSt++nmsg
                    ,rek=[], rdt=nrdt, rtc=0}
            codeJp = ("e.==.m1:" ++ jp) : makeRekiJp r
            nst = foldl (flip makeEvent) st' codeJp
@@ -131,7 +132,7 @@ rekiCorrect st = let rdtSt = rdt st
                      emsSt = ems st
                      emsSt' = delRekMessages (map snd rdtSt) emsSt
                      nems = emsSt' ++ makeRekiCorrect rdtSt
-                  in st{ems=nems,rdt=[]} 
+                  in st{player=(player st){edf=[]},ems=nems,rdt=[]} 
 
 delRekMessages :: [Char] -> [(String,Msg)] -> [(String,Msg)]
 delRekMessages chs emsSt =
@@ -169,8 +170,8 @@ mapAction :: Canvas -> CInfo -> Bmps -> Int -> Char -> State -> IO State
 mapAction c ci bmps gix ch st = do
   let irkSt = not $ null $ rek st
   rst <- if irkSt then rekiAction st else return st
-  let p@(Play xyP _ _ _ _ _ _ rgnP elgP _ iscP) = player rst
-  sequence_ [print (evt st),print (ecs st), print (mem st),print elgP,print iscP,print (jps st)]
+  let p@(Play xyP _ _ _ _ _ edfP rgnP elgP _ iscP) = player rst
+  sequence_ [print (evt st),print (ecs st), print (mem st),print elgP,print iscP,print (jps st),print edfP]
   (_,nrg) <- getRandomNumIO (5,rgnP)
   let nxy = keyCheck (sz st) xyP ch 
       ndr = mkDir xyP nxy
