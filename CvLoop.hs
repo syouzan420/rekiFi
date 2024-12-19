@@ -129,10 +129,13 @@ rekiHint st = let rdtSt = rdt st
 
 rekiCorrect :: State -> State
 rekiCorrect st = let rdtSt = rdt st
+                     rtcSt = rtc st
+                     rtlSt = rtl st
                      emsSt = ems st
                      emsSt' = delRekMessages (map snd rdtSt) emsSt
                      nems = emsSt' ++ makeRekiCorrect rdtSt
-                  in st{player=(player st){edf=[]},ems=nems,rdt=[]} 
+                  in st{player=(player st){edf=[]},ems=nems,rdt=[]
+                       ,rtl=rtlSt++[rtcSt]} 
 
 delRekMessages :: [Char] -> [(String,Msg)] -> [(String,Msg)]
 delRekMessages chs emsSt =
@@ -171,7 +174,7 @@ mapAction c ci bmps gix ch st = do
   let irkSt = not $ null $ rek st
   rst <- if irkSt then rekiAction st else return st
   let p@(Play xyP _ _ _ _ _ edfP rgnP elgP _ iscP) = player rst
-  sequence_ [print (evt st),print (ecs st), print (mem st),print elgP,print iscP,print (jps st),print edfP]
+  sequence_ [print (evt st),print (ecs st), print (mem st),print elgP,print iscP,print (jps st),print edfP,print (rtl st)]
   (_,nrg) <- getRandomNumIO (5,rgnP)
   let nxy = keyCheck (sz st) xyP ch 
       ndr = mkDir xyP nxy
@@ -259,7 +262,6 @@ gameClear c st = do putMoziCl c
                     let col=head chColors
                     putMozi c col (2,5) "Congratulations!"
                     putMozi c col (3,8) "Coding : yokoP"
-                    putMozi c col (3,10) "Test Play : takaPon"
                     putMozi c col (2,17) "Thank you for playing!"
                     let nsz=head gridSize
                         p = player st

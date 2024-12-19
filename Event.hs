@@ -22,9 +22,25 @@ makeEvent scr st =
         "if" -> makeDecision es st
         "ch" -> makeChoice es st{chd=[]}
         "rk" -> setReki es st
+        "rt" -> rekiTimeShow es st
+        "rs" -> rekiScoreShow st
         "sm" -> showMap st
         "hm" -> hideMap st
         _   -> st
+
+insertMes :: String -> State -> State
+insertMes str st = let msgSt = msg st
+                       mctSt = mct st
+                       nmsg = take mctSt msgSt ++ str ++ drop mctSt msgSt
+                    in st{msg=nmsg}
+
+rekiScoreShow :: State -> State
+rekiScoreShow st = let rtlSt = rtl st
+                       score = 600 - sum rtlSt
+                    in insertMes (show score) st
+
+rekiTimeShow :: [String] -> State -> State
+rekiTimeShow xs st = foldl (\st a -> insertMes (show (rtl st!!read a)) st) st xs
 
 showMap :: State -> State
 showMap st = st{swc=(swc st){ism=True}}

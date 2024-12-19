@@ -64,6 +64,7 @@ data State = State {player:: !Play,
                           -- i.e. z=abc (left Chars "z", right Chars "abc")
                     rdt:: ![(Rdt,Char)],   -- Rekisi Mondai Data
                     rtc:: !Int,     -- Rekisi timer tic
+                    rtl:: ![Int],   -- Rekisi timer log
                     chr:: !Chara, -- Character number (i,i)
                     tic:: !Int,   -- timer tic
                     swc:: !Switch,

@@ -17,7 +17,7 @@ data Mode = Fr | Bl | Ex | Mv | Pn | Wn | Cm | DB | DF deriving (Eq,Enum,Show)
 
 txPasses :: [FilePath]
 txPasses = let nameh = "Texts/fi"
-               nums = [0..4]
+               nums = [0..8]
                namel = ".txt"
             in map (\n -> nameh ++ show n ++ namel) nums
 

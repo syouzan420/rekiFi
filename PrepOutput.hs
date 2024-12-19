@@ -30,7 +30,8 @@ prepMessage (cvW,cvH) sw st =
         |ir = (p-1,miq)
         |otherwise = nextPQ cvH miq (p,q) 
       iscx = fst npos==1 && fst npos/=p
-      nst = if isc then makeEvent scr st{swc=sw{imp=ip}} else st{swc=sw{imp=ip}}
+      st' = st{mct=nmct, swc=sw{imp=ip}}
+      nst = if isc then makeEvent scr st' else st'
       nsw = swc nst
       scx = if mc==0 then 0 else msc nst
       npos' = if iscx then (p,miq) else npos
@@ -38,7 +39,7 @@ prepMessage (cvW,cvH) sw st =
       eq = floor ((cvH-cvT)/ht)
       p' = if miq==q then p+1 else p
       q' = if miq==q then eq else q-1
-      nst' = nst{mct=nmct,mps=npos',mcl=cln,msc=nmsc,swc=nsw{ims=nims}}
+      nst' = nst{mps=npos',mcl=cln,msc=nmsc,swc=nsw{ims=nims}}
    in (ch,p,q,p',q',miq,mc,ms,col,rbs,mix,gix,scx,rfs,irb,isc,iscx,nsw,nst,nst') 
 
 prepNormal isc iscx mc ms mix scx nsw nst =
