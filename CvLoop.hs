@@ -47,8 +47,9 @@ timerEvent c ci bmps st = do
       isChrUpdate = ism  sw && t `mod` 10 == 0 && not (ims sw) 
       nrtc = if null (rdt st) || t `mod` 20 /=0 then rtcSt else rtcSt + 1
       rst = if nrtc==30 then rekiHint st else st
+      igc = (sn . player) st == length stages
       nst = rst{tic=t,rtc=nrtc}
-  if isChrUpdate then drawUpdate c ci bmps nst else putMessageG c ci nst
+  if isChrUpdate && not igc then drawUpdate c ci bmps nst else putMessageG c ci nst
 
 drawUpdate :: Canvas -> CInfo -> Bmps -> State -> IO State 
 drawUpdate c ci@((cvW,cvH),_) bmps st = do
