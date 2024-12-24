@@ -47,9 +47,9 @@ timerEvent c ci bmps st = do
       isChrUpdate = ism  sw && t `mod` 10 == 0 && not (ims sw) 
       nrtc = if null (rdt st) || t `mod` 20 /=0 then rtcSt else rtcSt + 1
       rst = if nrtc==30 then rekiHint st else st
-      igc = (sn . player) st == length stages
       nst = rst{tic=t,rtc=nrtc}
-  if isChrUpdate && not igc then drawUpdate c ci bmps nst else putMessageG c ci nst
+  if igc sw then return nst else
+      if isChrUpdate then drawUpdate c ci bmps nst else putMessageG c ci nst
 
 drawUpdate :: Canvas -> CInfo -> Bmps -> State -> IO State 
 drawUpdate c ci@((cvW,cvH),_) bmps st = do
@@ -201,6 +201,7 @@ mapAction c ci bmps gix ch st = do
 inputLoop :: Canvas -> CInfo -> Bmps -> Int -> State -> IO State 
 inputLoop c ci@((cvW,cvH),_) bmps kc st
   | iniSt = return st
+  | igcSt = return st
   | imsSt && not impSt = skipMessage c ci st{swc=sw{ini=True}} 
   | impSt = if ichSt then drawUpdate c ci bmps (choiceMode ch st) 
                      else return st{swc=sw{imp=False}}
@@ -208,7 +209,7 @@ inputLoop c ci@((cvW,cvH),_) bmps kc st
   | otherwise = return st 
        where sw = swc st
              iniSt = ini sw; impSt = imp sw; imsSt = ims sw
-             ichSt = ich sw; ismSt = ism sw
+             ichSt = ich sw; ismSt = ism sw; igcSt = igc sw
              mix = floor (cvW/wt) - 1; gix = floor (cvW/wg) - 2
              ch = keyCodeToChar kc
 
@@ -249,7 +250,7 @@ nextStage c ci bmps st = do
       maxSn = length stages
       gc = nsn == maxSn
       nlg = elg p++'c':show (sn p)
-  if gc then gameClear c st
+  if gc then gameClear c st{swc=(swc st){igc=True}}
         else do
           let nsz=gridSize!!nsn
               grid=makeGrid nsz (stages!!nsn)
@@ -263,10 +264,11 @@ gameClear c st = do putMoziCl c
                     let col=head chColors
                     putMozi c col (2,5) "Congratulations!"
                     putMozi c col (3,8) "Coding : yokoP"
-                    putMozi c col (2,17) "Thank you for playing!"
+                    putMozi c col (5,13) "2024 12 24" 
+                    putMozi c col (2,17) "Thank you!"
                     let nsz=head gridSize
                         p = player st
                         np=p{xy = head initPos, gr=makeGrid nsz (head stages),
                              pl=head players,et=' ',sn=0,elg="",isc=False}
-                    return st{sz=nsz,player=np,swc=(swc st){igc=False}}
+                    return st{sz=nsz,player=np}
 
