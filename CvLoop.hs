@@ -262,9 +262,8 @@ nextStage c ci bmps st = do
 gameClear :: Canvas -> State -> IO State 
 gameClear c st = do putMoziCl c
                     let col=head chColors
-                    putMozi c col (2,5) "Congratulations!"
                     putMozi c col (3,8) "Coding : yokoP"
-                    putMozi c col (5,13) "2024 12 24" 
+                    putMozi c col (3,12) "First Up : 2024 12 24" 
                     putMozi c col (2,17) "Thank you!"
                     let nsz=head gridSize
                         p = player st
