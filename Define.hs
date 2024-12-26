@@ -85,7 +85,7 @@ miy :: Int
 miy = 2
 
 wg, hg, wt, ht :: Double 
-wg = 16; hg = 20; wt = 28; ht = 20 -- grid width & height , tategaki letters width & height
+wg = 16; hg = 20; wt = 28; ht = 24 -- grid width & height , tategaki letters width & height
 
 nfs, rfs :: Int
 nfs = 20; rfs = 8 -- normal font size, rubi font size

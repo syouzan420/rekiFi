@@ -154,8 +154,8 @@ makeRekiHint :: [(Rdt,Char)] -> [(String,Msg)]
 makeRekiHint = map (\(Rdt _ mon hint _,ch)-> (ch:"Rk",mon++" >>"++hint))
 
 makeRekiCorrect :: [(Rdt,Char)] -> [(String,Msg)]  
-makeRekiCorrect = map (\(Rdt nen mon _ exp,ch) ->
-                           (ch:"Rk",show nen++"年 "++mon++" >>"++exp))
+makeRekiCorrect = map (\(Rdt nen mon hint exp,ch) ->
+                           (ch:"Rk",show nen++"年 "++mon++" >>"++hint++" >>"++exp))
 
 makeRekiAns :: String -> [Int] -> String
 makeRekiAns str = map (\i -> fromMaybe ' ' (lookup i (zip [1..] str)))
