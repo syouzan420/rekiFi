@@ -1,6 +1,7 @@
 module PrepOutput(prepMessage,prepNormal,prepLetters,prepLet,prepShowMap,nextPQ) where
 
-import Define (miy,wg,hg,wt,ht,cvT,nfs,rfs,State(..),Play(..),Switch(..),Mode(..),Pos)
+import Define (miy,tiy,wg,hg,wt,ht,cvT,nfs,rfs
+              ,State(..),Play(..),Switch(..),Mode(..),Pos)
 import Browser (chColors)
 import Event (makeEvent)
 import Action (makeChoiceMessage)
@@ -9,7 +10,7 @@ import Libs (getInside)
 prepMessage (cvW,cvH) sw st =
   let ms = msg st; mc = mct st                      -- messages and message count    O
       ml = length ms-1 
-      h = if ism sw then snd (sz st) + 3 else 0     -- message initial height
+      h = if ism sw then snd (sz st) + tiy else 0     -- message initial height
       mix = floor (cvW/wt) - 1                      -- message initial x             O
       gix = floor (cvW/wg) - 2                      -- grid initial x                O
       miq = miy+h

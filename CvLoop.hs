@@ -8,7 +8,7 @@ import Data.Maybe(fromMaybe)
 import qualified Data.Map as Map
 import Text.Read(readMaybe)
 import Define(State(..),Play(..),Switch(..),Mode(..),LSA(..),Dir(..),CInfo,Pos,Msg
-             ,miy,wg,wt)
+             ,miy,tiy,wg,wt)
 import Stages(stages,players,initPos,gridSize)
 import Grid(checkGrid,makeGrid)
 import Browser(chColors,clFields,flToKc,fields,cvRatio,localStore,stringToJson)
@@ -36,7 +36,7 @@ getPos ((cvW,cvH),_) st =
       p = player st
       grid = gr p 
       (px,py) = xy p
-   in Ps (gix-wd,miy) (px+gix-wd+1,py+miy+1) (wd+10,miy) (mix+msc st,miy+hi+3)
+   in Ps (gix-wd,miy) (px+gix-wd+1,py+miy+1) (wd+10,miy) (mix+msc st,miy+hi+tiy)
 
 timerEvent :: Canvas -> CInfo -> Bmps -> State -> IO State
 timerEvent c ci bmps st = do

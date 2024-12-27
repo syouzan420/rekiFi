@@ -21,5 +21,5 @@ initPlayer = Play {xy=head initPos, gr=makeGrid igs (head stages), dr = Dw
 
 initSwitch :: Switch
 initSwitch = Switch {ils=False,igc=False,ims=True,imp=False,itc=False
-                    ,ini=False,ich=False,ism=False}
+                    ,ini=False,ich=False,ism=False,ias=False}
 

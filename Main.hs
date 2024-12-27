@@ -2,13 +2,24 @@ import Haste (setTimer,Interval(Once,Repeat))
 import Haste.Events (onEvent,preventDefault,KeyEvent(..),KeyData(..),
                      MouseEvent(..),MouseData(..),TouchEvent(..),TouchData(..))
 import Haste.DOM (document,elemById,fromElem)
+import Haste.Audio (play,Audio)
 import Data.IORef(newIORef,readIORef,writeIORef)
 import CvLoop (inputLoop,mouseClick,timerEvent)
-import Browser (getCanvasInfo,cvRatio,tcStart,tcEnd,touchIsTrue,setBmps)
+import Browser (getCanvasInfo,cvRatio,tcStart,tcEnd,touchIsTrue,setBmps,setAudio)
+import Define (State(..),Switch(..))
 import Initialize (initState)
+
+playAudio :: Audio -> State -> IO State 
+playAudio audio st = do
+  let iAS = (ias . swc) st
+  if iAS then return st else do
+    play audio
+    return st{swc=(swc st){ias=True}}
+
 main :: IO ()
 main = do
   bmps <- setBmps
+  a <- setAudio
   Just ce <- elemById "canvas"
   Just bup <- elemById "up"
   Just bleft <- elemById "left"
@@ -19,7 +30,7 @@ main = do
   ci <- getCanvasInfo c
   state <- newIORef initState 
   onEvent bok Click $ \_ -> do 
-    readIORef state >>= inputLoop c ci bmps 32 >>= writeIORef state
+    readIORef state >>= playAudio a >>= inputLoop c ci bmps 32 >>= writeIORef state
   onEvent bup Click $ \_ -> do 
     readIORef state >>= inputLoop c ci bmps 107 >>= writeIORef state
   onEvent bleft Click $ \_ -> do 
@@ -32,7 +43,7 @@ main = do
     preventDefault
     readIORef state >>= inputLoop c ci bmps kc >>= writeIORef state
   onEvent ce Click $ \(MouseData xy _ _) -> do
-    readIORef state >>= mouseClick c ci bmps xy >>= writeIORef state
+    readIORef state >>= playAudio a >>= mouseClick c ci bmps xy >>= writeIORef state
   onEvent ce TouchStart $ \(TouchData {}) -> do
     readIORef state >>= tcStart >>= writeIORef state
   onEvent ce TouchEnd $ \(TouchData {}) -> do

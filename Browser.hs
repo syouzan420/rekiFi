@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Browser (getCanvasInfo,chColors,cvRatio,clFields,flToKc,fields,
-                tcStart,tcEnd,touchIsTrue,localStore,stringToJson,setBmps) where
+module Browser (getCanvasInfo,chColors,cvRatio,clFields,flToKc,fields,setAudio
+                ,tcStart,tcEnd,touchIsTrue,localStore,stringToJson,setBmps) where
 
 import Haste(JSString)
 import Haste.Events (onEvent,preventDefault,KeyEvent(..),KeyData(..))
@@ -10,7 +10,9 @@ import Haste.Foreign (ffi)
 import Haste.JSON(JSON,encodeJSON,decodeJSON)
 import Haste.JSString(pack,unpack)
 import Haste.LocalStorage(setItem,getItem,removeItem)
-import Define (State(swc),Switch(itc),CInfo,LSA(..),imgfile,wstfile,charafile)
+import Haste.Audio(mkSource,newAudio,defaultAudioSettings,AudioSettings(..),Audio)
+import Define (State(swc),Switch(itc),CInfo,LSA(..)
+              ,imgfile,wstfile,charafile,audiofile)
 
 chColors :: [Color]
 chColors = [RGB 200 255 200,RGB 255 204 153,RGB 255 153 204,RGB 153 255 255] 
@@ -91,3 +93,8 @@ setBmps = do
   chrs <- sequence (loadImgs 56 charafile)
   wsts <- sequence (loadImgs 120 wstfile)
   return (imgs,chrs,wsts)
+
+setAudio :: IO Audio
+setAudio = do
+  let Just adSrc = mkSource audiofile
+  newAudio (defaultAudioSettings{audioLooping=True,audioVolume=0.5}) [adSrc] 

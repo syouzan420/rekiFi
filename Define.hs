@@ -1,5 +1,7 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Define where
 
+import Haste(JSString)
 import EReki(Rdt(..))
 
 type Pos = (Int,Int)
@@ -78,11 +80,15 @@ data Switch = Switch { ils:: !Bool,    -- Leave Stage?
                        itc:: !Bool,     -- Touch Is True?
                        ini:: !Bool,     -- No Input?
                        ich:: !Bool,    -- Choice Mode?
-                       ism:: !Bool     -- Show Map?
+                       ism:: !Bool,     -- Show Map?
+                       ias:: !Bool      -- audio start?
                      } deriving (Eq, Show)
 
-miy :: Int
+miy :: Int -- map initial y
 miy = 2
+
+tiy :: Int -- text initial relative y
+tiy = 2
 
 wg, hg, wt, ht :: Double 
 wg = 16; hg = 20; wt = 28; ht = 24 -- grid width & height , tategaki letters width & height
@@ -101,6 +107,9 @@ charafile = "Images/Chara/ch"
 
 wstfile :: String
 wstfile = "Images/Wst/wst"
+
+audiofile :: JSString
+audiofile = "Audio/test.mp3"
 
 wstIndex :: String
 wstIndex = "あいうえおxkhnmtrsy かはなまきひにみくふぬむけへねめこほのもとろそよをてれせゑつるすゆんちりしゐたらさやわ゛阿和宇吾付須被意百雄間波が9穂ぞ話葉ざぐび緒ど3ずばぶぎべ補芽1府場じ個我ご図時曾火日だ座羽4馬部祖炉具語づ後子男でぜ出裳美"
