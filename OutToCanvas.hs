@@ -4,14 +4,17 @@ module OutToCanvas(putMessageG,putMessageT,putGrid,putMoziCl,putPlayer
 import Haste.Graphics.Canvas(Canvas,Color(RGB),Bitmap,color,font,translate,rotate
                             ,text,draw,scale,render,renderOnTop)
 import Control.Monad (when)
-import Define (miy,wg,hg,wt,ht,cvT,nfs,rfs,State(..),Play(..),Switch(..),CInfo,Grid,Pos
+import Define (miy,wg,hg,wt,ht,cvT,nfs,rfs
+              ,State(..),Play(..),Switch(..),CInfo,Grid,Pos
               ,Mode(..),Msg,Fsize,wstIndex)
 import Browser(chColors)
 import PrepOutput(prepMessage,prepNormal,prepShowMap,prepLet,prepLetters,nextPQ)
 import Libs(getIndex)
 
-putMessageG :: Canvas -> CInfo -> State -> IO State
-putMessageG c ((cvW,cvH),_) st = do 
+type Bmps = ([Bitmap],[Bitmap],[Bitmap])
+
+putMessageG :: Canvas -> CInfo -> Bmps -> State -> IO State
+putMessageG c ((cvW,cvH),_) bmps st = do 
    let sw = swc st
    if ims sw && not (imp sw) then do
      let (ch,p,q,p',q',miq,mc,ms,col,rbs,mix,gix,scx,rfs,irb,isc,iscx,nsw,nst,nst')
@@ -21,7 +24,7 @@ putMessageG c ((cvW,cvH),_) st = do
             else do
               let (itp0,itp1,msg',posx) = prepNormal isc iscx mc ms mix scx nsw nst
               when itp0 $ putMessageT c cvH (posx,miq) msg'
-              when itp1 $ clearMessage c gix nst >>
+              when itp1 $ clearMessage c cvW gix bmps nst >>
                                        putMessageT c cvH (posx,miq) msg'
               when (not isc && not iscx) $ putLet c col nfs 0 (p,q) ch
      return nst'
@@ -83,13 +86,19 @@ putPlayer c pxy p = do
 putMoziCl :: Canvas -> IO ()
 putMoziCl c = render c $ text (0,0) "" 
 
-clearMessage :: Canvas -> Int -> State -> IO ()
-clearMessage c gix st = do
+clearMessage :: Canvas -> Double -> Int -> Bmps -> State -> IO ()
+clearMessage c cvW gix bmps st = do
   putMoziCl c
   when isMap $ do
     let (wd,cnm,pxy,p) = prepShowMap gix st
+    let (_,chrs,_) = bmps
+    let (chNum,anNum) = chr st
+    let (wd,_) = sz st
+    let chrIndex = chNum*8+anNum
+    let chPos = (wd+10,miy) 
     putGrid c (gix-wd,miy) (gr p)
     putMozi c (chColors!!cnm) pxy [pl p]
+    putChara c chrs cvW chPos chrIndex
       where isMap = ism$swc st 
 
 putMozi :: Canvas -> Color -> Pos -> String -> IO ()

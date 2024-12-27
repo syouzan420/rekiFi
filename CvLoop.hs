@@ -49,7 +49,7 @@ timerEvent c ci bmps st = do
       rst = if nrtc==30 then rekiHint st else st
       nst = rst{tic=t,rtc=nrtc}
   if igc sw then return nst else
-      if isChrUpdate then drawUpdate c ci bmps nst else putMessageG c ci nst
+      if isChrUpdate then drawUpdate c ci bmps nst else putMessageG c ci bmps nst
 
 drawUpdate :: Canvas -> CInfo -> Bmps -> State -> IO State 
 drawUpdate c ci@((cvW,cvH),_) bmps st = do
@@ -81,12 +81,12 @@ mouseClick c ci bmps (x,y) = do
       cvWH = fst ci
   inputLoop c ci bmps (flToKc (clFields nx ny (fields cvWH))) 
 
-skipMessage :: Canvas -> CInfo -> State -> IO State
-skipMessage c ci st = do
-  st' <- putMessageG c ci st
+skipMessage :: Canvas -> CInfo -> Bmps -> State -> IO State
+skipMessage c ci bmps st = do
+  st' <- putMessageG c ci bmps st
   let sw' = swc st'
   if imp sw' || not (ims (swc st)) then return st'{swc=sw'{ini=False}}
-                                   else skipMessage c ci st'
+                                   else skipMessage c ci bmps st'
 
 choiceMode :: Char -> State -> State
 choiceMode ch st = 
@@ -202,7 +202,7 @@ inputLoop :: Canvas -> CInfo -> Bmps -> Int -> State -> IO State
 inputLoop c ci@((cvW,cvH),_) bmps kc st
   | iniSt = return st
   | igcSt = return st
-  | imsSt && not impSt = skipMessage c ci st{swc=sw{ini=True}} 
+  | imsSt && not impSt = skipMessage c ci bmps st{swc=sw{ini=True}} 
   | impSt = if ichSt then drawUpdate c ci bmps (choiceMode ch st) 
                      else return st{swc=sw{imp=False}}
   | ismSt = mapAction c ci bmps gix ch st
