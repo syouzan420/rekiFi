@@ -97,4 +97,4 @@ setBmps = do
 setAudio :: IO Audio
 setAudio = do
   let Just adSrc = mkSource audiofile
-  newAudio (defaultAudioSettings{audioLooping=True,audioVolume=0.5}) [adSrc] 
+  newAudio (defaultAudioSettings{audioLooping=True,audioVolume=1}) [adSrc] 
